@@ -2,4 +2,13 @@
 <resources>
 
     <style name="Theme.Demo2" parent="android:Theme.Material.Light.NoActionBar" />
+
+    <!-- 自定义启动主题，直接从NoActionBar继承，跳过SplashScreen -->
+    <style name="Theme.Demo2.NoSplash" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowActionBar">false</item>
+    </style>
 </resources>
