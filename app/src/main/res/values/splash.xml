@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.App.Starting" parent="Theme.SplashScreen">
+        <!-- 使用透明背景 -->
+        <item name="windowSplashScreenBackground">@android:color/transparent</item>
+        
+        <!-- 设置为透明图标 -->
+        <item name="windowSplashScreenAnimatedIcon">@drawable/transparent_icon</item>
+        
+        <!-- 启动画面持续时间设为最小值 -->
+        <item name="windowSplashScreenAnimationDuration">0</item>
+        
+        <!-- 启动后使用的主题 -->
+        <item name="postSplashScreenTheme">@style/Theme.Demo2</item>
+    </style>
+</resources> 

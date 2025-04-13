@@ -1,18 +1,24 @@
 package com.example.demo2.viewmodel
 
 import android.content.Context
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.demo2.data.AppDatabase
 import com.example.demo2.data.PasswordEntity
 import com.example.demo2.repository.PasswordRepository
+import com.example.demo2.utils.ImportExportUtil
 import com.example.demo2.utils.UserPreferences
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.util.Date
 
 // 定义搜索类型
 enum class SearchType {
@@ -156,6 +162,86 @@ class PasswordViewModel(
     
     fun resetState() {
         _passwordOperationState.value = PasswordOperationState.Initial
+    }
+    
+    // 导出密码
+    fun exportPasswords(context: Context, outputUri: Uri) {
+        viewModelScope.launch {
+            _passwordOperationState.value = PasswordOperationState.Loading
+            
+            try {
+                val userId = getUserId()
+                if (userId == 0L) {
+                    _passwordOperationState.value = PasswordOperationState.Error("用户未登录")
+                    return@launch
+                }
+                
+                val passwords = passwordRepository.getAllPasswordsByUserId(userId).firstOrNull() ?: emptyList()
+                
+                if (passwords.isEmpty()) {
+                    _passwordOperationState.value = PasswordOperationState.Error("没有可导出的密码")
+                    return@launch
+                }
+                
+                val result = withContext(Dispatchers.IO) {
+                    ImportExportUtil.exportPasswords(context, passwords, outputUri)
+                }
+                
+                result.fold(
+                    onSuccess = { count ->
+                        _passwordOperationState.value = PasswordOperationState.Success("成功导出 $count 个密码")
+                    },
+                    onFailure = { e ->
+                        _passwordOperationState.value = PasswordOperationState.Error("导出失败: ${e.message}")
+                    }
+                )
+            } catch (e: Exception) {
+                _passwordOperationState.value = PasswordOperationState.Error("导出时发生错误: ${e.message}")
+            }
+        }
+    }
+    
+    // 导入密码
+    fun importPasswords(context: Context, inputUri: Uri) {
+        viewModelScope.launch {
+            _passwordOperationState.value = PasswordOperationState.Loading
+            
+            try {
+                val userId = getUserId()
+                if (userId == 0L) {
+                    _passwordOperationState.value = PasswordOperationState.Error("用户未登录")
+                    return@launch
+                }
+                
+                val result = withContext(Dispatchers.IO) {
+                    ImportExportUtil.importPasswords(context, inputUri, userId)
+                }
+                
+                result.fold(
+                    onSuccess = { entities ->
+                        if (entities.isEmpty()) {
+                            _passwordOperationState.value = PasswordOperationState.Error("导入文件不包含有效的密码数据")
+                            return@launch
+                        }
+                        
+                        val insertedIds = passwordRepository.importPasswords(entities)
+                        _passwordOperationState.value = PasswordOperationState.Success("成功导入 ${insertedIds.size} 个密码")
+                    },
+                    onFailure = { e ->
+                        _passwordOperationState.value = PasswordOperationState.Error("导入失败: ${e.message}")
+                    }
+                )
+            } catch (e: Exception) {
+                _passwordOperationState.value = PasswordOperationState.Error("导入时发生错误: ${e.message}")
+            }
+        }
+    }
+    
+    // 检查文件是否有效
+    suspend fun isValidPasswordFile(context: Context, uri: Uri): Boolean {
+        return withContext(Dispatchers.IO) {
+            ImportExportUtil.isValidPasswordFile(context, uri)
+        }
     }
 }
 

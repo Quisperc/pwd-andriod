@@ -1,5 +1,8 @@
 package com.example.demo2.ui.screen
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,7 +22,10 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.ExitToApp
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.outlined.Download
+import androidx.compose.material.icons.outlined.Upload
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
@@ -48,6 +54,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -77,7 +84,9 @@ fun PasswordListScreen(
     var searchQuery by remember { mutableStateOf("") }
     var searchType by remember { mutableStateOf(SearchType.ALL_FIELDS) }
     var isSearchTypeMenuExpanded by remember { mutableStateOf(false) }
+    var isMoreMenuExpanded by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
     
     var passwordsFlow by remember {
         mutableStateOf<Flow<List<PasswordEntity>>>(passwordViewModel.getAllPasswords())
@@ -87,6 +96,38 @@ fun PasswordListScreen(
     var isLoading by remember { mutableStateOf(true) }
     val passwordOperationState by passwordViewModel.passwordOperationState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
+    
+    // 导入文件选择器
+    val importFileLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri: Uri? ->
+        uri?.let {
+            scope.launch {
+                // 确保我们可以持久访问这个URI
+                context.contentResolver.takePersistableUriPermission(
+                    it,
+                    android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION
+                )
+                
+                passwordViewModel.importPasswords(context, it)
+            }
+        }
+    }
+    
+    // 导出文件选择器
+    val exportFileLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("application/json")
+    ) { uri: Uri? ->
+        uri?.let {
+            // 确保我们可以持久访问这个URI
+            context.contentResolver.takePersistableUriPermission(
+                it,
+                android.content.Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+            )
+            
+            passwordViewModel.exportPasswords(context, it)
+        }
+    }
     
     // 初始加载所有密码
     LaunchedEffect(passwordsFlow) {
@@ -120,14 +161,67 @@ fun PasswordListScreen(
             TopAppBar(
                 title = { Text("我的密码") },
                 actions = {
-                    IconButton(onClick = {
-                        authViewModel.logout()
-                        onNavigateToLogin()
-                    }) {
-                        Icon(
-                            imageVector = Icons.Default.ExitToApp,
-                            contentDescription = "退出登录"
-                        )
+                    // 更多菜单
+                    Box {
+                        IconButton(onClick = { isMoreMenuExpanded = true }) {
+                            Icon(
+                                imageVector = Icons.Default.MoreVert,
+                                contentDescription = "更多选项"
+                            )
+                        }
+                        
+                        DropdownMenu(
+                            expanded = isMoreMenuExpanded,
+                            onDismissRequest = { isMoreMenuExpanded = false }
+                        ) {
+                            // 导入选项
+                            DropdownMenuItem(
+                                text = { Text("导入密码") },
+                                leadingIcon = {
+                                    Icon(
+                                        imageVector = Icons.Outlined.Upload,
+                                        contentDescription = "导入"
+                                    )
+                                },
+                                onClick = {
+                                    isMoreMenuExpanded = false
+                                    importFileLauncher.launch(arrayOf("application/json"))
+                                }
+                            )
+                            
+                            // 导出选项
+                            DropdownMenuItem(
+                                text = { Text("导出密码") },
+                                leadingIcon = {
+                                    Icon(
+                                        imageVector = Icons.Outlined.Download,
+                                        contentDescription = "导出"
+                                    )
+                                },
+                                onClick = {
+                                    isMoreMenuExpanded = false
+                                    val dateFormat = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault())
+                                    val fileName = "passwords_${dateFormat.format(Date())}.json"
+                                    exportFileLauncher.launch(fileName)
+                                }
+                            )
+                            
+                            // 退出登录选项
+                            DropdownMenuItem(
+                                text = { Text("退出登录") },
+                                leadingIcon = {
+                                    Icon(
+                                        imageVector = Icons.Default.ExitToApp,
+                                        contentDescription = "退出登录"
+                                    )
+                                },
+                                onClick = {
+                                    isMoreMenuExpanded = false
+                                    authViewModel.logout()
+                                    onNavigateToLogin()
+                                }
+                            )
+                        }
                     }
                 }
             )

@@ -35,6 +35,9 @@ interface PasswordDao {
 
     @Insert
     suspend fun insertPassword(password: PasswordEntity): Long
+    
+    @Insert
+    suspend fun insertPasswords(passwords: List<PasswordEntity>): List<Long>
 
     @Update
     suspend fun updatePassword(password: PasswordEntity)

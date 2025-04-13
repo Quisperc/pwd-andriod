@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     id("kotlin-kapt")
+    id("kotlinx-serialization")
 }
 
 android {
@@ -51,8 +52,15 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
     
+    // 添加闪屏API支持
+    implementation("androidx.core:core-splashscreen:1.0.1")
+    
     // 添加Material图标扩展库
     implementation("androidx.compose.material:material-icons-extended:1.6.0")
+    
+    // JSON序列化
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
+    implementation("androidx.documentfile:documentfile:1.0.1")
     
     // Room数据库
     implementation("androidx.room:room-runtime:2.6.1")

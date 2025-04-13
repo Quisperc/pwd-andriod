@@ -15,6 +15,8 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        
+        // 直接设置内容，跳过SplashScreen
         setContent {
             Demo2Theme {
                 Surface(

@@ -1,5 +1,13 @@
 package com.example.demo2.ui.navigation
 
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.EaseIn
+import androidx.compose.animation.core.EaseOut
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -17,6 +25,7 @@ import com.example.demo2.ui.screen.PasswordDetailScreen
 import com.example.demo2.ui.screen.PasswordFormScreen
 import com.example.demo2.ui.screen.PasswordListScreen
 import com.example.demo2.ui.screen.RegisterScreen
+import com.example.demo2.ui.screen.SplashScreen
 import com.example.demo2.viewmodel.AuthViewModel
 import com.example.demo2.viewmodel.AuthViewModelFactory
 import com.example.demo2.viewmodel.PasswordViewModel
@@ -25,6 +34,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 
 sealed class Screen(val route: String) {
+    object Splash : Screen("splash")
     object Login : Screen("login")
     object Register : Screen("register")
     object PasswordList : Screen("password_list")
@@ -50,21 +60,59 @@ fun AppNavigation(startDestination: String? = null) {
         factory = PasswordViewModelFactory(context)
     )
     
-    val initialStartDestination = startDestination ?: remember {
-        runBlocking {
-            if (authViewModel.isUserLoggedIn()) {
-                Screen.PasswordList.route
-            } else {
-                Screen.Login.route
-            }
-        }
-    }
+    val initialStartDestination = startDestination ?: Screen.Splash.route
     
     NavHost(
         navController = navController,
         startDestination = initialStartDestination
     ) {
-        composable(Screen.Login.route) {
+        composable(
+            route = Screen.Splash.route,
+            enterTransition = { EnterTransition.None },
+            exitTransition = { 
+                fadeOut(
+                    animationSpec = tween(
+                        durationMillis = 500,
+                        easing = EaseOut
+                    )
+                )
+            }
+        ) {
+            SplashScreen(
+                onSplashFinished = {
+                    val route = runBlocking {
+                        if (authViewModel.isUserLoggedIn()) {
+                            Screen.PasswordList.route
+                        } else {
+                            Screen.Login.route
+                        }
+                    }
+                    navController.navigate(route) {
+                        popUpTo(Screen.Splash.route) { inclusive = true }
+                    }
+                }
+            )
+        }
+        
+        composable(
+            route = Screen.Login.route,
+            enterTransition = { 
+                fadeIn(
+                    animationSpec = tween(
+                        durationMillis = 500,
+                        easing = EaseIn
+                    )
+                ) 
+            },
+            exitTransition = { 
+                fadeOut(
+                    animationSpec = tween(
+                        durationMillis = 300,
+                        easing = EaseOut
+                    )
+                )
+            }
+        ) {
             LoginScreen(
                 viewModel = authViewModel,
                 onNavigateToRegister = { navController.navigate(Screen.Register.route) },
@@ -76,7 +124,25 @@ fun AppNavigation(startDestination: String? = null) {
             )
         }
         
-        composable(Screen.Register.route) {
+        composable(
+            route = Screen.Register.route,
+            enterTransition = { 
+                fadeIn(
+                    animationSpec = tween(
+                        durationMillis = 500,
+                        easing = EaseIn
+                    )
+                ) 
+            },
+            exitTransition = { 
+                fadeOut(
+                    animationSpec = tween(
+                        durationMillis = 300,
+                        easing = EaseOut
+                    )
+                )
+            }
+        ) {
             RegisterScreen(
                 viewModel = authViewModel,
                 onNavigateToLogin = { navController.navigate(Screen.Login.route) },
@@ -88,7 +154,25 @@ fun AppNavigation(startDestination: String? = null) {
             )
         }
         
-        composable(Screen.PasswordList.route) {
+        composable(
+            route = Screen.PasswordList.route,
+            enterTransition = { 
+                fadeIn(
+                    animationSpec = tween(
+                        durationMillis = 500,
+                        easing = EaseIn
+                    )
+                ) 
+            },
+            exitTransition = { 
+                fadeOut(
+                    animationSpec = tween(
+                        durationMillis = 300,
+                        easing = EaseOut
+                    )
+                )
+            }
+        ) {
             PasswordListScreen(
                 authViewModel = authViewModel,
                 passwordViewModel = passwordViewModel,
@@ -104,7 +188,25 @@ fun AppNavigation(startDestination: String? = null) {
             )
         }
         
-        composable(Screen.AddPassword.route) {
+        composable(
+            route = Screen.AddPassword.route,
+            enterTransition = { 
+                fadeIn(
+                    animationSpec = tween(
+                        durationMillis = 500,
+                        easing = EaseIn
+                    )
+                ) 
+            },
+            exitTransition = { 
+                fadeOut(
+                    animationSpec = tween(
+                        durationMillis = 300,
+                        easing = EaseOut
+                    )
+                )
+            }
+        ) {
             PasswordFormScreen(
                 passwordViewModel = passwordViewModel,
                 onNavigateBack = { navController.popBackStack() }
@@ -115,7 +217,23 @@ fun AppNavigation(startDestination: String? = null) {
             route = Screen.PasswordDetail.route,
             arguments = listOf(
                 navArgument("passwordId") { type = NavType.LongType }
-            )
+            ),
+            enterTransition = { 
+                fadeIn(
+                    animationSpec = tween(
+                        durationMillis = 500,
+                        easing = EaseIn
+                    )
+                ) 
+            },
+            exitTransition = { 
+                fadeOut(
+                    animationSpec = tween(
+                        durationMillis = 300,
+                        easing = EaseOut
+                    )
+                )
+            }
         ) { backStackEntry ->
             val passwordId = backStackEntry.arguments?.getLong("passwordId") ?: 0
             PasswordDetailScreen(
@@ -132,7 +250,23 @@ fun AppNavigation(startDestination: String? = null) {
             route = Screen.EditPassword.route,
             arguments = listOf(
                 navArgument("passwordId") { type = NavType.LongType }
-            )
+            ),
+            enterTransition = { 
+                fadeIn(
+                    animationSpec = tween(
+                        durationMillis = 500,
+                        easing = EaseIn
+                    )
+                ) 
+            },
+            exitTransition = { 
+                fadeOut(
+                    animationSpec = tween(
+                        durationMillis = 300,
+                        easing = EaseOut
+                    )
+                )
+            }
         ) { backStackEntry ->
             val passwordId = backStackEntry.arguments?.getLong("passwordId") ?: 0
             PasswordFormScreen(

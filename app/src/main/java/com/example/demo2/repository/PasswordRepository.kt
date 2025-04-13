@@ -97,4 +97,8 @@ class PasswordRepository(private val passwordDao: PasswordDao) {
     suspend fun getPasswordById(id: Long): PasswordEntity? {
         return passwordDao.getPasswordById(id)
     }
+    
+    suspend fun importPasswords(passwords: List<PasswordEntity>): List<Long> {
+        return passwordDao.insertPasswords(passwords)
+    }
 } 
