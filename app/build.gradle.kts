@@ -7,11 +7,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.demo2"
+    namespace = "com.example.pwd"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.example.demo2"
+        applicationId = "com.example.pwd"
         minSdk = 34
         targetSdk = 34
         versionCode = 1
@@ -22,7 +22,7 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"

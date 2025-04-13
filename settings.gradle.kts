@@ -35,6 +35,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "demo2"
+rootProject.name = "pwd"
 include(":app")
  
